@@ -45,12 +45,12 @@
       letter-spacing: 1.1px;
     }
     #weaponStone {
-      position: absolute; left: 165px; top: 190px;
-      width: 130px; height: 105px; z-index: 10;
+      position: absolute; left: 135px; top: 170px;
+      width: 210px; height: 120px; z-index: 10;
       transition: left 1s cubic-bezier(.6,-0.3,.7,1.2), top 1s cubic-bezier(.6,-0.3,.7,1.2), transform 1s cubic-bezier(.6,-0.3,.7,1.2);
     }
-    .stone-svg { width: 130px; height: 105px; display: block; transition: 0.25s;}
-    .stone-word { font-size: 1.55rem; font-weight: bold; fill: #222; text-anchor: middle; dominant-baseline: middle; pointer-events: none; user-select: none;}
+    .stone-svg { width: 210px; height: 120px; display: block; transition: 0.25s;}
+    .stone-word { font-size: 1.4rem; font-weight: bold; fill: #222; text-anchor: middle; dominant-baseline: middle; pointer-events: none; user-select: none;}
     #arrow {
       position: absolute; z-index: 50;
       width: 70px; height: 12px;
@@ -112,7 +112,6 @@
   <script>
     const shuffleChoices = true;
     let words = [];
-
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -122,17 +121,18 @@
 
     let score = 0, castleHp = 10, current = 0, timer = null, timeLeft = 10, gameOn = false, animating = false;
 
+    // ▶️ 바위 SVG : 가로폭 210, 세로 120으로 더 넓게!
     function stoneSVG(word) {
       return `
-      <svg class="stone-svg" viewBox="0 0 130 105">
-        <ellipse cx="67" cy="55" rx="55" ry="44" fill="#b6b6b8" stroke="#47474a" stroke-width="6"/>
-        <ellipse cx="52" cy="43" rx="16" ry="9" fill="#d1d1d4" opacity="0.55"/>
-        <ellipse cx="80" cy="67" rx="11" ry="7" fill="#e6e6eb" opacity="0.35"/>
-        <ellipse cx="95" cy="41" rx="7" ry="6" fill="#fff" opacity="0.17"/>
-        <ellipse cx="49" cy="70" rx="15" ry="7" fill="#a2a2a2" opacity="0.29"/>
-        <ellipse cx="72" cy="45" rx="10" ry="4" fill="#fff" opacity="0.17"/>
-        <ellipse cx="67" cy="90" rx="35" ry="8" fill="#6c6c75" opacity="0.23"/>
-        <text x="67" y="63" font-size="1.55rem" font-family="'Pretendard','Noto Sans KR',sans-serif"
+      <svg class="stone-svg" viewBox="0 0 210 120">
+        <ellipse cx="105" cy="60" rx="92" ry="48" fill="#b6b6b8" stroke="#47474a" stroke-width="6"/>
+        <ellipse cx="80" cy="50" rx="26" ry="12" fill="#d1d1d4" opacity="0.55"/>
+        <ellipse cx="140" cy="78" rx="18" ry="8" fill="#e6e6eb" opacity="0.35"/>
+        <ellipse cx="175" cy="48" rx="12" ry="7" fill="#fff" opacity="0.17"/>
+        <ellipse cx="60" cy="85" rx="22" ry="10" fill="#a2a2a2" opacity="0.29"/>
+        <ellipse cx="135" cy="57" rx="13" ry="5" fill="#fff" opacity="0.17"/>
+        <ellipse cx="105" cy="104" rx="65" ry="13" fill="#6c6c75" opacity="0.23"/>
+        <text x="105" y="68" font-size="1.6rem" font-family="'Pretendard','Noto Sans KR',sans-serif"
          fill="#222" font-weight="bold" text-anchor="middle" dominant-baseline="middle">${word}</text>
       </svg>
       `;
@@ -149,8 +149,8 @@
       goblin.style.width = "120px";
       const stone = document.getElementById('weaponStone');
       stone.innerHTML = '';
-      stone.style.left = '165px';
-      stone.style.top = '190px';
+      stone.style.left = '135px';
+      stone.style.top = '170px';
       stone.style.transform = 'translate(0px,0px)';
       document.getElementById('choices').innerHTML = '';
       const arrow = document.getElementById('arrow');
@@ -178,6 +178,7 @@
       document.getElementById('gameArea').style.display = 'none';
       document.getElementById('infoBar').style.display = 'none';
       document.getElementById('restartBtn').style.display = '';
+      document.getElementById('choices').innerHTML = ''; // <- 게임 종료시 보기 지움
       if(message) alert(message);
     }
 
@@ -196,14 +197,9 @@
         goblin.style.width = "120px";
         const stone = document.getElementById('weaponStone');
         stone.innerHTML = stoneSVG(words[current].word);
-        stone.style.left = '165px';
-        stone.style.top = '190px';
-        stone.style.transform = 'translate(0,0)';
-        setTimeout(()=>{
-          stone.style.left = '340px';
-          stone.style.top = '130px';
-          stone.style.transform = 'translateY(-25px)';
-        }, 100);
+        stone.style.left = '235px';
+        stone.style.top = '110px';
+        stone.style.transform = 'translateY(-25px)';
         setTimeout(() => {
           let q = words[current];
           let choices = [q.meaning, ...q.wrongs];
@@ -228,7 +224,6 @@
           let q = words[current];
           castleHp -= 1;
           setCastleImg();
-          document.getElementById('castleHp').textContent = '성 체력: ' + castleHp; // 바로 갱신
           document.getElementById('goblinImg').src = "3.png";
           showFeedback(q.word, q.meaning, false);
           setTimeout(() => { current++; nextQuestion(); }, 1800);
@@ -275,7 +270,6 @@
       } else {
         castleHp -= 1;
         setCastleImg();
-        document.getElementById('castleHp').textContent = '성 체력: ' + castleHp; // 바로 갱신
         document.getElementById('goblinImg').src = "3.png";
       }
       showFeedback(q.word, q.meaning, isCorrect);
@@ -322,7 +316,7 @@
       }
     });
 
-    // words.txt 불러오기
+    // 단어 데이터 불러오기 (words.txt가 같은 폴더에 있어야 함!)
     fetch('words.txt')
       .then(res => res.text())
       .then(txt => {
