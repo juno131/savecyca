@@ -212,7 +212,7 @@
       }
     }
 
-    let score = 0, castleHp = 10, current = 0, timer = null, timeLeft = 10, gameOn = false, animating = false;
+    let score = 0, castleHp = 10, current = 0, timer = null, timeLeft = 5, gameOn = false, animating = false;
 
     function stoneSVG(word) {
       return `
@@ -266,13 +266,15 @@
     function endGame(message) {
       if(timer) clearInterval(timer);
       document.getElementById('pauseMsg').style.display = 'block';
+      if(message) document.getElementById('pauseMsg').innerHTML = message + "<br>F5 또는 시작 버튼을 눌러 재시작하세요.";
       gameOn = false;
       document.getElementById('gameArea').style.display = 'none';
       document.getElementById('infoBar').style.display = 'none';
       document.getElementById('restartBtn').style.display = '';
       document.getElementById('choices').innerHTML = '';
       checkAndShowRanking(score);
-      if(message) alert(message);
+      // alert는 이름 입력창이 뜬 뒤에 작동하도록 setTimeout 처리(실제 alert는 생략해도 무방)
+      // if(message) setTimeout(()=>alert(message), 200); 
     }
 
     function nextQuestion() {
@@ -306,7 +308,7 @@
         }, 1000);
       }, 1000);
 
-      timeLeft = 10;
+      timeLeft = 5;
       document.getElementById('timer').textContent = '남은 시간: ' + timeLeft + '초';
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
@@ -387,7 +389,7 @@
       score = 0; castleHp = 10; current = 0; gameOn = true; animating = false;
       document.getElementById('score').textContent = '점수: 0';
       document.getElementById('castleHp').textContent = '성 체력: 10';
-      document.getElementById('timer').textContent = '남은 시간: 10초';
+      document.getElementById('timer').textContent = '남은 시간: 5초';
       document.getElementById('choices').innerHTML = '';
       document.getElementById('gameArea').style.display = 'flex';
       document.getElementById('infoBar').style.display = 'flex';
@@ -432,7 +434,6 @@
       let ranking = getRanking();
       let minScore = (ranking.length < 10) ? 0 : ranking[ranking.length-1].score;
       if(finalScore > 0 && (ranking.length < 10 || finalScore > minScore)) {
-        // 이름 입력 모달 오픈
         document.getElementById('nameInputModal').style.display = 'flex';
         document.getElementById('playerName').value = "";
         document.getElementById('playerName').focus();
@@ -446,7 +447,6 @@
       if(!name) { alert("이름을 입력하세요!"); return; }
       if(name.length > 12) { alert("이름은 최대 12자까지 입력 가능합니다."); return; }
       let ranking = getRanking();
-      // 기록 추가 후, 높은 점수순(동점이면 먼저 기록한 사람이 우선)
       ranking.push({name, score});
       ranking.sort((a,b) => b.score - a.score);
       if(ranking.length > 10) ranking = ranking.slice(0,10);
