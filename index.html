@@ -82,12 +82,66 @@
       text-align: center;
     }
     #pauseMsg { display: none; position: fixed; left: 0; right: 0; top: 43%; margin: 0 auto; z-index: 2000; font-size: 2.3rem; background: rgba(24,24,32,0.94); color: #fff; border-radius: 25px; width: 520px; padding: 38px 18px; text-align: center; font-weight: bold; box-shadow: 0 8px 32px #818cf880; }
+    #rankingBox {
+      margin: 8px auto 0 auto; 
+      background: #f1f5fa;
+      border-radius: 18px; 
+      box-shadow: 0 4px 18px #818cf81a;
+      width: 430px; 
+      padding: 17px 14px 16px 14px;
+      font-size: 1.1rem;
+      letter-spacing: 0.2px;
+      font-weight: 500;
+      color: #3730a3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #rankingBox h3 { font-size: 1.4rem; margin: 0 0 11px 0; font-weight: bold; color: #6366f1; letter-spacing: 1.2px;}
+    #rankingList { width: 98%; margin: 0 auto; }
+    #rankingList tr { height: 33px; }
+    #rankingList td, #rankingList th { padding: 2px 6px; font-size: 1.08rem;}
+    #rankingList th { color: #6366f1; }
+    #nameInputModal {
+      display: none;
+      position: fixed;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(34,37,75,0.16);
+      z-index: 5000;
+      align-items: center;
+      justify-content: center;
+    }
+    #nameInputBox {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px #6366f155;
+      padding: 28px 32px 22px 32px;
+      text-align: center;
+      min-width: 340px;
+      font-size: 1.22rem;
+    }
+    #nameInputBox input[type=text] {
+      font-size: 1.19rem; padding: 10px 14px; border-radius: 9px; border: 1.5px solid #818cf8; width: 78%; margin: 11px 0 16px 0;
+    }
+    #nameInputBox button {
+      font-size: 1.15rem; padding: 8px 23px; border-radius: 10px; background: #818cf8; color: #fff; border: none; margin-top: 2px; cursor: pointer; font-weight: bold;
+    }
   </style>
 </head>
 <body>
   <h2 id="gameTitle">중앙예닮학교를 지켜라!(고1수능영어)</h2>
   <div class="centered-container" id="startContainer">
     <button id="startBtn">게임 시작</button>
+    <!-- 랭킹 박스 -->
+    <div id="rankingBox">
+      <h3>🏆 역대 TOP 10 랭킹</h3>
+      <table id="rankingList">
+        <thead>
+          <tr><th>순위</th><th>이름</th><th>점수</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
   <div id="pauseMsg">게임이 종료되었습니다.<br>F5 또는 시작 버튼을 눌러 재시작하세요.</div>
   <div id="infoBar" style="display:none">
@@ -109,8 +163,45 @@
   <div id="choices"></div>
   <div id="feedback"></div>
   <button id="restartBtn" style="display:none;">다시 시작</button>
+
+  <!-- 이름 입력 모달 -->
+  <div id="nameInputModal">
+    <div id="nameInputBox">
+      <div style="margin-bottom:10px;">축하합니다! 10위 안에 들었습니다.<br>이름을 남겨주세요.</div>
+      <input type="text" id="playerName" maxlength="12" placeholder="이름(최대 12자)">
+      <br>
+      <button id="submitNameBtn">등록</button>
+    </div>
+  </div>
+
   <script>
-    // 옵션 : 보기 섞기(true=랜덤, false=고정)
+    // ====== 점수 랭킹 시스템 ======
+    const RANKING_KEY = "savecyca_top10";
+    function getRanking() {
+      let data = [];
+      try { data = JSON.parse(localStorage.getItem(RANKING_KEY)) || []; } catch(e) {}
+      return data;
+    }
+    function setRanking(list) {
+      localStorage.setItem(RANKING_KEY, JSON.stringify(list));
+    }
+    function updateRankingUI() {
+      const ranking = getRanking();
+      const tbody = document.querySelector("#rankingList tbody");
+      tbody.innerHTML = "";
+      ranking.forEach((r, idx) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${idx+1}</td><td>${r.name}</td><td>${r.score}</td>`;
+        tbody.appendChild(tr);
+      });
+      // 10위까지 안되면 빈 줄로 채우기
+      for(let i=ranking.length;i<10;i++) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${i+1}</td><td>-</td><td>-</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+    // ====== 게임 본문 ======
     const shuffleChoices = true;
     let words = []; // 동적으로 fetch
 
@@ -123,7 +214,6 @@
 
     let score = 0, castleHp = 10, current = 0, timer = null, timeLeft = 10, gameOn = false, animating = false;
 
-    // 바위 SVG를 더 넓게
     function stoneSVG(word) {
       return `
       <svg class="stone-svg" viewBox="0 0 210 110">
@@ -180,7 +270,8 @@
       document.getElementById('gameArea').style.display = 'none';
       document.getElementById('infoBar').style.display = 'none';
       document.getElementById('restartBtn').style.display = '';
-      document.getElementById('choices').innerHTML = ''; // << 보기가 남지 않게
+      document.getElementById('choices').innerHTML = '';
+      checkAndShowRanking(score);
       if(message) alert(message);
     }
 
@@ -273,7 +364,7 @@
       } else {
         castleHp -= 1;
         setCastleImg();
-        document.getElementById('castleHp').textContent = '성 체력: ' + castleHp; // << 바로 체력 반영!
+        document.getElementById('castleHp').textContent = '성 체력: ' + castleHp;
         document.getElementById('goblinImg').src = "3.png";
       }
       showFeedback(q.word, q.meaning, isCorrect);
@@ -334,6 +425,38 @@
         alert('words.txt 파일을 찾을 수 없습니다.');
       });
 
+    // ====== 점수 랭킹 처리 ======
+
+    // 10위권 진입 체크 및 이름 등록창 표시
+    function checkAndShowRanking(finalScore) {
+      let ranking = getRanking();
+      let minScore = (ranking.length < 10) ? 0 : ranking[ranking.length-1].score;
+      if(finalScore > 0 && (ranking.length < 10 || finalScore > minScore)) {
+        // 이름 입력 모달 오픈
+        document.getElementById('nameInputModal').style.display = 'flex';
+        document.getElementById('playerName').value = "";
+        document.getElementById('playerName').focus();
+      } else {
+        updateRankingUI();
+      }
+    }
+    // 이름 등록 버튼 이벤트
+    document.getElementById('submitNameBtn').onclick = function() {
+      let name = document.getElementById('playerName').value.trim();
+      if(!name) { alert("이름을 입력하세요!"); return; }
+      if(name.length > 12) { alert("이름은 최대 12자까지 입력 가능합니다."); return; }
+      let ranking = getRanking();
+      // 기록 추가 후, 높은 점수순(동점이면 먼저 기록한 사람이 우선)
+      ranking.push({name, score});
+      ranking.sort((a,b) => b.score - a.score);
+      if(ranking.length > 10) ranking = ranking.slice(0,10);
+      setRanking(ranking);
+      document.getElementById('nameInputModal').style.display = 'none';
+      updateRankingUI();
+    };
+
+    // 게임 진입시 랭킹 박스 갱신
+    updateRankingUI();
   </script>
 </body>
 </html>
